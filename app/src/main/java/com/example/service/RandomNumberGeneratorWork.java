@@ -13,6 +13,7 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
+import androidx.work.Data;
 import androidx.work.ForegroundInfo;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
@@ -38,8 +39,10 @@ public class RandomNumberGeneratorWork extends Worker {
     }
 
     public void StartRandomNumberGenerator(){
+        Data data=getInputData();
+        int count_limit=data.getInt("max_limit",0);
         int i=0;
-        while (i<20&& !isStopped()) {
+        while (i<count_limit&& !isStopped()) {
             try {
 
                 Thread.sleep(1000);
@@ -62,7 +65,11 @@ public class RandomNumberGeneratorWork extends Worker {
     public Result doWork() {
         setForegroundAsync(createForeGroundInfo("Random Number Generator Running"));
         StartRandomNumberGenerator();
-        return Result.success();
+        Data data=new Data.Builder()
+                .putString("msg","task done succecfully")
+                .build();
+
+        return Result.success(data);
     }
 
     @Override

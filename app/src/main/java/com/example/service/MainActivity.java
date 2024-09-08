@@ -12,6 +12,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Button;
+import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
@@ -20,10 +21,14 @@ import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.Observer;
 import androidx.work.Constraints;
+import androidx.work.Data;
 import androidx.work.NetworkType;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.PeriodicWorkRequest;
+import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 import androidx.work.WorkRequest;
 
@@ -576,6 +581,36 @@ tyeb hala2 iza kabst stop servies fa le 7a yseer eno worker 3 ma 7a yen3amalo ex
 tyeb barke 3mlt cancel lal worker 2 fa le 7a yseer 7a ye3amal cancel worker 2 w worker 3 never exection l2no worker 3 7a yen3amal exection after worker 1 w worker 2 w ne7na 3mlna cancel lal worker 2 fa ma 7a ta3mel exection lal worker 3
 l2no l worker chain b2olak iza nla8a l worker m3yan w ken fe worker ba3do fa heda l worker ma 7a yen3amlo exection
 
+hala2 bel work manager fena na3mel observe lal status ta3et l work manger ya3ne iza heye runing succeded fail 2aw cancelled keef bade 2a3mela :
+WokrkManager.getInstance(getapplicationcontext()).getWorkInfoByIdLiveData() hyde l method retrive livedata object le bt5lene observe l status w l progress for specific for specific work lezm ta3teha l  id lal work requst ya3ne aye work badak ta3mel 3lyha observe work.getid()
+ba3den mnest3mel l observe method dot observe() hyde l method bta3mel observe 3ala live data objet le heye l work w bt3mel listner lal change lal status la yde l work l observer notify bas l status lal work tet8ayar  w bteba3 l status l 7ale taba3a fa fena na3ml action m3yan kel ma t8ayaret l status
+observe() bte5od this l context tene paramter l observer method
+this heye l owner life cyccle owner le heye l activity 2aw fragemnt 3ashn hay l method bt3mel observe 3ala life cycle ta3et l activity la ta3ref aymta ta3mel notify w teb3at e5er status bas tkoun bel onresume w l onstart
+
+hala2 badna net3alam eno keef neb3at data lal work exmple iza l user define eno loop tkoun la i<20 ya3ne limit ta3el loop ya3ne l user bado y7aded limit keef bade eb3at data lal worker la na3ml hal she w keef fene raje3 feedbak mn l work lal user
+bel main activity lezm n3ref varible mno3 Data lesh l2no l work byest2bel data mno3 data heda mn 5elelo badna neb3at data lal worker heye metl bundle key w value
+mnest3mel Data.bulder bt3mel insatnce Data.Bulder class hda l bulder byest3mel la ya3mel data object y5elene seer 3abe feha key w value
+Data data=new Data.Bulider()
+ba3den bade 3abe data integer,string..etc
+ana houn bade 3abe integer
+.putInt("max_limit",500)
+e5er she ba3mel build lala Data bulder .bulder
+ba3den bel woker requst best3mel method esma setInputdata() w b3teha l data le 3mlta la worker reqsurt le bade yeh
+hala2 bel worker class bade est2bel hay data le ba3ata
+b method l do work best2bel data 2aw bel onstart command ma7al ma badak y3ne l mohem eno 2awal ma tblesh service
+ba3mel obejct mn Data data= b7ot method emsa getInputData()
+int =contlimit=data.getInt("max_limit",0)
+
+tyeb barke hala2 bade raje3 data mn l worker lal main activity 3emra 3ana text bt2ole eno l worker is done
+bel do work
+ba3mel kamen object mn Data data=new Data.Bulder()
+.data.putString("msg","task done sucessufully)
+.build();
+hala2 keef bade eb3at hay data bel return Resut.sucess() beb3at l data bel sucess method fe 3ande constructor b method sucess bye5od data object
+hala2 bel main activity mnrou7 3ala onchange method ta3et l observe w ba3mel cheak iza workinfo.getstate.isfinished() ana bade est2bel data bas y5les l worker sho8lo
+ba3mel Data object data data= l work info.getoutputdata() heye l method do work bas ta3mel return byest2bela l work info b2lb method esma getoutputdata() hyde l method bt5elene est2bel data le mab3otetle mn l worker heye bteb3ata data la method b2lb l work info esma getoutputData()
+String msg=data.getstring("msg");
+heye l work info feha kel l ma3mlomet 3an hay l worker reqest feha l status data kel she
 
 hala2 badna netl3lam eno keef fena nest5dem l workmanger la na3mel long running tasks:
 la na3mel heda she badna nest3mel nafs concept ta3el l foreground
@@ -599,8 +634,7 @@ ya3ne ne7na 2awl she mna3ml run la servies fa l method l setforegroundasyn hyde 
 w hay kel she 5aso bel workmanger
  */
 
-public class
-MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity {
     int count;
     Button Start_service,Stop_service;
     ActivityResultLauncher<String> activityResultLauncher;
@@ -635,8 +669,23 @@ MainActivity extends AppCompatActivity {
             workRequest=new OneTimeWorkRequest.Builder(RandomNumberGeneratorWork.class).addTag("worker 1").build();
             workRequest1=new OneTimeWorkRequest.Builder(RandomNumberGeneratorWork1.class).addTag("worker 2").build();
             workRequest2=new OneTimeWorkRequest.Builder(RandomNumberGeneratorWork2.class).addTag("worker 3").build();
-            workRequest3=new OneTimeWorkRequest.Builder(RandomNumberGeneratorWork.class).build();
+            Data data= new Data.Builder()
+                    .putInt("max_limit",3)
+                    .build();
+            workRequest3=new OneTimeWorkRequest.Builder(RandomNumberGeneratorWork.class).setInputData(data).build();
 
+        workManager.getWorkInfoByIdLiveData(workRequest3.getId()).observe(this, new Observer<WorkInfo>() {
+            @Override
+            public void onChanged(WorkInfo workInfo) {
+                Toast.makeText(MainActivity.this, "work status"+workInfo.getState().name(), Toast.LENGTH_SHORT).show();
+
+                if(workInfo.getState().isFinished()){
+                    Data data1=workInfo.getOutputData();
+                    String msg=data1.getString("msg");
+                    Toast.makeText(MainActivity.this, ""+msg, Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
         Start_service.setOnClickListener(v->{
 //            Intent intent=new Intent(this, MyService.class);
 //            startService(intent);

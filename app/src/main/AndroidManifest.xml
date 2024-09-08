@@ -17,6 +17,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Service"
         tools:targetApi="31">
+
         <activity
             android:name=".MainActivity2"
             android:exported="true">
@@ -62,7 +63,7 @@
 
         <service
             android:name="androidx.work.impl.foreground.SystemForegroundService"
-            android:foregroundServiceType="dataSync"
+            android:foregroundServiceType="mediaPlayback"
             tools:node="merge">
 
         </service>
